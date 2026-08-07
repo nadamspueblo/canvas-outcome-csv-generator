@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Outcomes CSV Formatter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --success-bg: #d1fae5;
+            --success-text: #065f46;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --font-family: 'Inter', sans-serif;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            max-width: 900px;
+            width: 100%;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 24px 32px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #bfdbfe;
+            font-size: 0.95rem;
+        }
+
+        .content {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .prompt-box {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            height: 200px;
+            overflow-y: auto;
+            position: relative;
+            white-space: pre-wrap;
+            border: 1px solid #0f172a;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .prompt-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .btn-copy {
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            color: var(--text-main);
+            background-color: #f9fafb;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background-color: white;
+        }
+
+        .footer {
+            background-color: #f9fafb;
+            border-top: 1px solid var(--border-color);
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filename-group {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .filename-input {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px 0 0 6px;
+            font-family: var(--font-family);
+            font-size: 0.9rem;
+            width: 100%;
+            border-right: none;
+        }
+
+        .filename-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .filename-extension {
+            padding: 10px 14px;
+            background-color: #e5e7eb;
+            border: 1px solid var(--border-color);
+            border-radius: 0 6px 6px 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f3f4f6;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .message-box {
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .message-box.show {
+            display: block;
+        }
+
+        .message-box.success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid #a7f3d0;
+        }
+
+        .message-box.error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid #fecaca;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .content, .header, .footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="header">
+            <h1>Canvas Outcomes Formatter</h1>
+            <p>Convert your standards and rubrics into a Canvas-ready CSV file in three easy steps.</p>
+        </div>
+
+        <div class="content">
+            
+            <!-- Step 1: AI Prompt -->
+            <div class="step-container">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    Generate the CSV using AI
+                </div>
+                <div class="prompt-header">
+                    <p class="prompt-desc">Copy this strict instruction prompt and paste it into ChatGPT, Claude, or MagicSchool. Add your standards/rubrics at the very bottom.</p>
+                    <button class="btn-copy" id="copyPromptBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Prompt
+                    </button>
+                </div>
+                <!-- The raw text content of the prompt -->
+                <div class="prompt-box" id="promptText">You are an expert instructional designer and Canvas LMS administrator. I need you to convert my class standards and rubrics into a strict CSV file formatted for the Canvas Outcomes Import API.
+
+CRITICAL FORMATTING RULES:
+1. The Header: The very first row MUST be exactly this, character for character:
+vendor_guid,object_type,title,description,display_name,calculation_method,calculation_int,workflow_state,parent_guids,ratings,,,,,,,
+
+2. Rows: Every single row must have exactly 17 columns (16 commas).
+
+3. Commas in Text: If any text contains a comma, the entire field MUST be wrapped in double-quotes (e.g., "This, for example").
+
+4. Group Rows (Folders):
+   * object_type must be group.
+   * Leave calculation_method, calculation_int, and all ratings columns completely blank (just back-to-back commas).
+   * Use root_ as a prefix for the main course folder vendor_guid. Use grp_ as a prefix for standard category folders.
+
+5. Outcome Rows (Rubrics):
+   * object_type must be outcome.
+   * calculation_method must be decaying_average.
+   * calculation_int must be 65.
+   * Use out_ as a prefix for outcome vendor_guids.
+   * parent_guids must include the root folder AND the specific category folder, separated by a space (e.g., root_course grp_unit1).
+
+6. The HTML Description Workaround (CRITICAL):
+   * Do NOT put the specific rubric criteria in the ratings columns.
+   * Instead, combine the 4-point rubric descriptions into the description column using HTML tags for formatting.
+   * Example format: "<strong>Exemplary (4):</strong> [Text]<br><br><strong>Proficient (3):</strong> [Text]<br><br><strong>Developing (2):</strong> [Text]<br><br><strong>Needs Improvement (1):</strong> [Text]"
+
+7. The Ratings Columns: For outcome rows, the 8 columns at the very end must always exactly be: 4,Exemplary,3,Proficient,2,Developing,1,Needs Improvement
+
+Please convert the following standards/rubrics into this exact CSV format. Output ONLY the raw CSV text inside a code block. Do not add any conversational text.
+
+[PASTE YOUR STANDARDS/RUBRICS HERE]</div>
+            </div>
+
+            <!-- Step 2: Paste Output -->
+            <div class="step-container">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    Paste the AI's Output
+                </div>
+                <p class="prompt-desc">Copy the raw CSV text generated by the AI and paste it entirely into the text box below. Don't worry if it looks like a giant wall of text.</p>
+                <div class="input-area">
+                    <textarea 
+                        id="csvInput" 
+                        placeholder="vendor_guid,object_type,title,description,display_name,calculation_method,calculation_int,workflow_state,parent_guids,ratings,,,,,,,..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Step 3: Format and Download is in the footer -->
+        </div>
+
+        <div class="footer">
+            <div class="step-header">
+                <span class="step-number">3</span>
+                Format & Download
+            </div>
+            
+            <div id="messageBox" class="message-box"></div>
+
+            <div class="controls">
+                <div class="filename-group">
+                    <input type="text" id="filename" class="filename-input" value="canvas_outcomes" placeholder="canvas_outcomes">
+                    <span class="filename-extension">.csv</span>
+                </div>
+
+                <div class="btn-group">
+                    <button id="clearBtn" class="btn btn-secondary">Clear Input</button>
+                    <button id="downloadBtn" class="btn btn-primary">Download Formatted CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const csvInput = document.getElementById('csvInput');
+            const filenameInput = document.getElementById('filename');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyPromptBtn = document.getElementById('copyPromptBtn');
+            const promptText = document.getElementById('promptText');
+            const messageBox = document.getElementById('messageBox');
+
+            // The strict header expected by Canvas
+            const EXPECTED_HEADER = "vendor_guid,object_type,title,description,display_name,calculation_method,calculation_int,workflow_state,parent_guids,ratings,,,,,,,";
+
+            /**
+             * Copies the prompt text to the clipboard using execCommand fallback for iFrame compatibility
+             */
+            copyPromptBtn.addEventListener('click', () => {
+                const textToCopy = promptText.innerText || promptText.textContent;
+                
+                // Create a temporary textarea to hold the text
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                
+                // Select and copy
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    
+                    // Visual feedback
+                    const originalText = copyPromptBtn.innerHTML;
+                    copyPromptBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    copyPromptBtn.style.backgroundColor = 'var(--success-bg)';
+                    copyPromptBtn.style.color = 'var(--success-text)';
+                    copyPromptBtn.style.borderColor = '#a7f3d0';
+                    
+                    setTimeout(() => {
+                        copyPromptBtn.innerHTML = originalText;
+                        copyPromptBtn.style.backgroundColor = '';
+                        copyPromptBtn.style.color = '';
+                        copyPromptBtn.style.borderColor = '';
+                    }, 2000);
+                } catch (err) {
+                    showMessage('error', 'Failed to copy prompt to clipboard.');
+                }
+                
+                // Remove temporary element
+                document.body.removeChild(tempTextArea);
+            });
+
+            /**
+             * Formats the raw CSV string by injecting newlines before specific identifiers.
+             * @param {string} rawData 
+             * @returns {string} Formatted CSV string
+             */
+            function formatCSV(rawData) {
+                // 1. Remove existing line breaks to ensure a clean slate
+                let singleLine = rawData.replace(/(\r\n|\n|\r)/gm, "");
+                
+                // 2. Locate the header row to ensure it's at the start.
+                let headerIndex = singleLine.indexOf("vendor_guid");
+                if (headerIndex === -1) {
+                    throw new Error("Could not find the standard header row starting with 'vendor_guid'. Make sure you copied the whole AI output.");
+                }
+                
+                // Trim anything before the header (like markdown block formatting)
+                singleLine = singleLine.substring(headerIndex);
+
+                // 3. Ensure the header exactly matches the required Canvas format.
+                if (!singleLine.startsWith(EXPECTED_HEADER)) {
+                     throw new Error("Header row is malformed or missing commas. It must match the strict 17-column format.");
+                }
+
+                // 4. Apply the Universal Regex to insert newlines before every folder or outcome.
+                // This targets the pattern: root_something,group OR grp_something,group OR out_something,outcome
+                const rowRegex = /(root_[a-zA-Z0-9_]+,group|grp_[a-zA-Z0-9_]+,group|out_[a-zA-Z0-9_]+,outcome)/g;
+                
+                let formatted = singleLine.replace(rowRegex, '\n$1');
+
+                // 5. Cleanup blank lines directly under the header
+                formatted = formatted.replace(EXPECTED_HEADER + "\n\n", EXPECTED_HEADER + "\n");
+                
+                return formatted.trim();
+            }
+
+            /**
+             * Displays a success or error message to the user.
+             * @param {string} type 'success' or 'error'
+             * @param {string} text Message content
+             */
+            function showMessage(type, text) {
+                messageBox.textContent = text;
+                messageBox.className = 'message-box show ' + type;
+
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    messageBox.className = 'message-box';
+                }, 5000);
+            }
+
+            // --- Event Listeners ---
+
+            clearBtn.addEventListener('click', () => {
+                csvInput.value = '';
+                filenameInput.value = 'canvas_outcomes';
+                csvInput.focus();
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                const rawText = csvInput.value.trim();
+
+                if (!rawText) {
+                    showMessage('error', 'Please paste the raw CSV text from the AI first.');
+                    return;
+                }
+
+                try {
+                    // Format the text
+                    const formattedCSV = formatCSV(rawText);
+
+                    // Create the Blob for downloading
+                    const blob = new Blob([formattedCSV], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Create a hidden link to trigger the download
+                    const link = document.createElement('a');
+                    let filename = filenameInput.value.trim() || 'canvas_outcomes';
+                    if (!filename.toLowerCase().endsWith('.csv')) {
+                        filename += '.csv';
+                    }
+
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    showMessage('success', 'Success! Your formatted CSV has been downloaded.');
+
+                } catch (error) {
+                    showMessage('error', error.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
